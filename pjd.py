@@ -4,9 +4,6 @@ def checksum(message):
 
         size = len(message)
         cs = 0
-        if (size%2):
-            size -= 1
-            cs = ord(message[size])
 
         #Realiza a checksum 1 caracter por vez
         while size > 0:
