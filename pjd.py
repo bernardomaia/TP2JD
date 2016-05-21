@@ -8,7 +8,7 @@ def checksum(message):
             size -= 1
             cs = ord(message[size])
 
-        #Realiza a checksum 2 caracteres por vez
+        #Realiza a checksum 1 caracter por vez
         while size > 0:
             size -=1
             cs += ord(message[size])
