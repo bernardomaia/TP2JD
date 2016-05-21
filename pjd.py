@@ -20,32 +20,60 @@ def activeOpen(SRV,port):
     soquete = Soquete()
     host = socket.gethostname()
     
-    soquete.s.connect((host,port))
+    while 1:
+        soquete.sendSYN(host,port)
+        print "Cliente diz: enviei SYN para ",host,":",port
+        soquete.state = "SYN_SENT"
+    
     return soquete
 
 def passiveOpen(port):
     soquete = Soquete()
     host = socket.gethostname()
     soquete.s.bind((host, port))
-    
+    soquete.state = "LISTEN"
     print "host: ", host
     print "port: ", port
-    soquete.s.listen(5)
     
-    conn, addr = soquete.accept()
+    while 1:
+        seqNo = -1
+        package, addr = soquete.s.recvfrom(1024)
+        header, data = splitPackage(package)
+        if soquete.state == "LISTEN":
+            if header.type == '3':
+                print "Servidor diz: recebi SYN("+header.seqno+") do ", addr
+                soquete.state = "LISTEN2"
+                seqNo = header.seqno
+        elif soquete.state == "LISTEN2":
+            if header.type == '2' and int(header.seqno) == int(seqNo)+1:
+                print "Servidor diz: recebi ACK("+header.seqno+")  do ", addr
+                soquete.state = "EST"
+                seqNo = header.seqno
+                    
     
-    return (conn, addr)
+    return  addr
+
+def splitPackage(p):
+    a,b,c,data = p.split(',')
+    header = Header(a,b,c)
+    return (header, data)
 
 class Soquete:
     
     def __init__(self):
-        self.s = socket.socket()
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.state = 'CLOSED'
         
     def recv(self, size):
         return self.s.recv(size)
     
-    def send(self, data):
-        self.s.send(data)
+    def sendSYN(self, host, port):
+        header = Header("3","0", "")
+        self.send(host,port,header,"")
+    
+    def send(self, host, port, header,data):
+        package = header+data
+        self.s.sendto(package,(host,port))
     
     def close(self):
         self.s.close()
@@ -54,3 +82,18 @@ class Soquete:
         conn = Soquete()
         conn.s, addr = self.s.accept()
         return conn, addr
+
+
+class Header:
+    
+    def __init__(self, t, s, w):
+        self.type = t
+        self.seqno = s
+        self.window = w
+    
+    def __str__(self):
+        return self.type+","+self.seqno+","+self.window+","
+    
+    def __add__(self, other):
+        return str(self) + other
+
