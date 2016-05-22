@@ -1,21 +1,27 @@
 import socket
 
+TYPE_DATA = 1
+TYPE_ACK = 2
+TYPE_SYN = 3
+TYPE_FIN = 4
+TYPE_RST = 5
+
 def checksum(message):
 
-        size = len(message)
-        cs = 0
+    size = len(message)
+    cs = 0
 
-        #Realiza a checksum 1 caracter por vez
-        while size > 0:
-            size -=1
-            cs += ord(message[size])
+    #Realiza a checksum 1 caracter por vez
+    while size > 0:
+        size -=1
+        cs += ord(message[size])
+    #Passando o carry
+    if ( cs > 0xffff):
+    cs = (cs & 0x1111) + (cs >>16)
+    return hex(cs)
 
-        #Passando o carry
-        if ( cs > 0xffff):
-            cs = (cs & 0x1111) + (cs >>16)
-        return hex(cs)
-
-
+def receive():
+	
 def activeOpen(SRV,port):
     soquete = Soquete()
     host = socket.gethostname()
